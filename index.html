@@ -34,6 +34,8 @@
     迷路サイズ（奇数 5〜99）:
     <input type="number" id="sizeInput" value="21" min="5" max="99" step="2">
     <button onclick="startMaze()">開始</button>
+    <button onclick="startDemo()">デモ開始</button>
+    <button onclick="stopDemo()">デモ終了</button>
   </div>
   <canvas id="maze" width="600" height="600"></canvas>
 
@@ -41,6 +43,8 @@
     const canvas = document.getElementById('maze');
     const ctx = canvas.getContext('2d');
     let maze, path, visited, rows, cols, cellSize, step;
+    let demoMode = false;
+    let demoTimeoutId = null;
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -106,7 +110,13 @@
         ctx.fill();
       }
       step++;
-      if (step < path.length) requestAnimationFrame(animate);
+      if (step < path.length) {
+        requestAnimationFrame(animate);
+      } else if (demoMode) {
+        demoTimeoutId = setTimeout(() => {
+          runDemoIteration();
+        }, 2000);
+      }
     }
 
     function startMaze() {
@@ -122,6 +132,42 @@
       solve(1, 1);
       step = 0;
       animate();
+    }
+
+    function getRandomMazeSize() {
+      const minSize = 5;
+      const maxSize = 51;
+      let size = Math.floor(Math.random() * ((maxSize - minSize) / 2 + 1)) * 2 + minSize;
+      return size;
+    }
+
+    function runDemoIteration() {
+      if (!demoMode) return;
+      
+      const randomSize = getRandomMazeSize();
+      rows = cols = randomSize;
+      cellSize = canvas.width / cols;
+      maze = Array.from({ length: rows }, () => Array(cols).fill(1));
+      generateMaze(1, 1);
+      path = [];
+      visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+      solve(1, 1);
+      step = 0;
+      animate();
+    }
+
+    function startDemo() {
+      if (demoMode) return;
+      demoMode = true;
+      runDemoIteration();
+    }
+
+    function stopDemo() {
+      demoMode = false;
+      if (demoTimeoutId) {
+        clearTimeout(demoTimeoutId);
+        demoTimeoutId = null;
+      }
     }
   </script>
 </body>
